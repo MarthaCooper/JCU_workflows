@@ -18,7 +18,7 @@ Dislaimer: This documentation is not endorsed by the JCU HPC team/eResearch. I c
 
 ## 1. Before you start
 
-The JCU HPC is a linux HPC, and you'll need to be comfortable in the unix/bash command line. Things like navigating the file system as well making/removing files and directories are essential, and understanding bash scripting will be very helpful. There are ltos of online resources for this purpose. I like [LearnLinuxTV](https://www.youtube.com/c/LearnLinuxtv/featured), a youtube channel with intro series on bash commands and scripting to get you started. 
+The JCU HPC is a linux HPC, and you'll need to be comfortable in the unix/bash command line. Things like navigating the file system as well making/removing files and directories are essential, and understanding bash scripting will be very helpful. There are lots of online resources for this purpose. I like [LearnLinuxTV](https://www.youtube.com/c/LearnLinuxtv/featured), a youtube channel with intro series on bash commands and scripting to get you started. 
 
 Please also make sure you've read the official documentation for the [JCU HPC](https://secure.jcu.edu.au/confluence/display/Public/Home). I'll point back to this documentation a lot throughout. 
 
@@ -44,7 +44,7 @@ And enter your password when prompted.
 
 If you'll be using the HPC a lot, you might want to set up an alias (a command line shortcut) on your computer to make logging on quicker. You can read more about setting up aliases for commonly used commands [here](https://coolestguidesontheplanet.com/make-an-alias-in-bash-shell-in-os-x-terminal/). I set up an alias called ```connect_zodiac``` that ```ssh```'s me on to the zodiac HPC. 
 
-Instructions for **windows** computers are a bit different and requires ssh client software like [PuTTY](https://www.putty.org/). Instructions can be found in the official [JCU HPC documentation](https://secure.jcu.edu.au/confluence/display/Public/HPRC+Cluster%3A+Quick+Start+User+Guide#Loggingin-win) and in the Software Carpentries [Introduction to High Performance Computing](https://hpc-carpentry.github.io/hpc-intro/12-cluster/index.html).
+Unless using **windows 10** (can use computer terminal), instructions for **windows** computers are a bit different and requires ssh client software like [PuTTY](https://www.putty.org/). Instructions can be found in the official [JCU HPC documentation](https://secure.jcu.edu.au/confluence/display/Public/HPRC+Cluster%3A+Quick+Start+User+Guide#Loggingin-win) and in the Software Carpentries [Introduction to High Performance Computing](https://hpc-carpentry.github.io/hpc-intro/12-cluster/index.html).
 
 ## 4. Where am I? 
 You are in your home directory on the HPC ```log in node```. This node is used for uploading and downloading files from/to your computer, running quick tests and submitting jobs to the ```compute nodes``` on the cluster, which are nodes where the actual work is performed. A short introductory lecture to HPC by Andrew Turner at the University of Edinburgh can be found [here](https://www.youtube.com/watch?v=i3cpkJ6iszk).
@@ -89,7 +89,7 @@ The following lines that start with ```#PBS``` are information for the PBS job s
 In each PBS script, we then need to:
 + load the modules (software) that are required to perform that job
 + move to the correct directory to perfome the job, in the above case that is the directory that the PBS script was submitted from ```$PBS_O_WORKDIR```
-+ set any necessary environment variables
++ set any necessary environment variables (What are [environment variables?](https://www.youtube.com/watch?v=ADh_OFBfdEE))
 + make any necessary files for job output
 + execute the job. 
 
@@ -121,7 +121,7 @@ mkdir -p $OUTDIR
 fastqc -t $NCPU -o $OUTDIR $INPUTDIR/*.fastq.gz
 ```
 
-Make your own PBS script in your favourite text editor, such as nano.
+Make your own PBS script in your favourite text editor, such as *nano* or *Notepad++*. (NB. If using text editors outside the the HPC's linux system you will need to convert the EOL for your scripts from your OS to linux before submitting to the HPC. In *Notepad++* this can be done under the edit tab, other text editors may require use of [*dos2unix*](http://dos2unix.sourceforge.net/))
 ```{bash, eval = F}
 nano example.pbs
 ```
@@ -174,7 +174,7 @@ Notes:
 
 + File paths and environment variables defined in PBS scripts will also need to be changed to match your directory tree. 
 
-+ Please read all software manuals and make sure that all parameters match specifications for your experiment(s). This resrouce has been designed to help you hit the ground running and is very unlikely to represent the perfect use case for your specific experiment. 
++ Please read all software manuals and make sure that all parameters match specifications for your experiment(s) (try *<software> --help* for more information). This resrouce has been designed to help you hit the ground running and is very unlikely to represent the perfect use case for your specific experiment. 
 
 + Thank you to Ashley Waardenberg who spent a lot of time getting all these softwares up and running on the HPC. This pipeline is based on his work. 
 
@@ -222,6 +222,9 @@ cd $PBS_O_WORKDIR
 ##### Execute Program #####
 multiqc .
 ```
+
++ What is [.bashrc?](https://www.youtube.com/watch?v=a8D8Sg1WWJM) 
+
 
 ### Step 2: Obtaining a reference genome and annotations
 
@@ -566,7 +569,7 @@ done
 
 This job produces several output files. The info below is from the STAR manual (https://physiology.med.cornell.edu/faculty/skrabanek/lab/angsd/lecture_notes/STARmanual.pdf)"
 
-+ Aligned.out.bam file - an unsorted bam file. "The paired ends of an alignment are always adjacent, and multiple alignments of a read are adjacent as well. This ”unsorted” file can be directly used with downstream software such as HTseq, without the need of name sorting. The order of the reads will match that of the input FASTQ(A) files only if one thread is used --runThread 1, and --outFilterType --BySJout is not used." (STAR manual)
++ Aligned.out.bam file - an unsorted bam file. "The paired ends of an alignment are always adjacent, and multiple alignments of a read are adjacent as well. This "unsorted" file can be directly used with downstream software such as HTseq, without the need of name sorting. The order of the reads will match that of the input FASTQ(A) files only if one thread is used --runThread 1, and --outFilterType --BySJout is not used." (STAR manual)
 
 + Aligned.sortedByCoord.out.bam file - bam sorted by coordinate "similar to samtools
 sort command."
