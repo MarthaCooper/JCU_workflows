@@ -1,5 +1,5 @@
 ---
-title: "RNA-Seq for AITHM using the JCU Zodiac HPC"
+title: "RNAseq on the JCU Zodiac HPC"
 author: "Martha Cooper"
 date: "2020/06/09. Last updated on `r Sys.Date()`"
 output: 
@@ -12,165 +12,17 @@ A collection of information, links and resources for (human) RNA-seq analysis on
 
 ---
 
-Dislaimer: This documentation is not endorsed by the JCU HPC team/eResearch. I created this resourse when I was learning and am sharing it the AITHM researchers in Cairns to (hopefully) make the HPC learning curve a little less steep. Any mistakes are my own. 
+Dislaimer: This documentation is not endorsed by the JCU HPC team/eResearch. I created this resource when I was learning and am sharing it the AITHM researchers in Cairns to (hopefully) make the HPC learning curve a little less steep. Any mistakes are my own. 
 
 ---
 
-## 1. Before you start
-
-The JCU HPC is a linux HPC, and you'll need to be comfortable in the unix/bash command line. Things like navigating the file system as well making/removing files and directories are essential, and understanding bash scripting will be very helpful. There are lots of online resources for this purpose. I like [LearnLinuxTV](https://www.youtube.com/c/LearnLinuxtv/featured), a youtube channel with intro series on bash commands and scripting to get you started. 
-
-Please also make sure you've read the official documentation for the [JCU HPC](https://secure.jcu.edu.au/confluence/display/Public/Home). I'll point back to this documentation a lot throughout. 
-
-## 2. Getting a HPC account
-The JCU HPC (zodiac.hpc.jcu.edu.au) is managed by the eResearch Team in Townsville. Important people to ask for help include Wayne Mallet and Wayne Spagnol in Townsville, and Andrew Grey Spence in Cairns. 
-
-To get your own account, **email ITHelpDesk to raise a Service Now request**. 
-
-## 3. Logging on to the HPC
-When you get your account set up, you can log in using ```ssh``` from the terminal application on your computer. On a **mac**, open the terminal and log in using your user name is (your jc number) and password (the normal one for your jc account) by the following command (remembering to replace the x's with your jc number):
-
-When on the JCU network, use the following;
-```{bash, eval = F}
-ssh jcxxxxxx@zodiac.hpc.jcu.edu.au
-```
-
-When outside the JCU network, add the port flag (-p) 8822;
-```{bash, eval = F}
-ssh jcxxxxxx@zodiac.hpc.jcu.edu.au -p 8822
-```
-
-And enter your password when prompted. 
-
-If you'll be using the HPC a lot, you might want to set up an alias (a command line shortcut) on your computer to make logging on quicker. You can read more about setting up aliases for commonly used commands [here](https://coolestguidesontheplanet.com/make-an-alias-in-bash-shell-in-os-x-terminal/). I set up an alias called ```connect_zodiac``` that ```ssh```'s me on to the zodiac HPC. 
-
-Unless using **windows 10** (can use computer terminal), instructions for **windows** computers are a bit different and requires ssh client software like [PuTTY](https://www.putty.org/). Instructions can be found in the official [JCU HPC documentation](https://secure.jcu.edu.au/confluence/display/Public/HPRC+Cluster%3A+Quick+Start+User+Guide#Loggingin-win) and in the Software Carpentries [Introduction to High Performance Computing](https://hpc-carpentry.github.io/hpc-intro/12-cluster/index.html).
-
-## 4. Where am I? 
-You are in your home directory on the HPC ```log in node```. This node is used for uploading and downloading files from/to your computer, running quick tests and submitting jobs to the ```compute nodes``` on the cluster, which are nodes where the actual work is performed. A short introductory lecture to HPC by Andrew Turner at the University of Edinburgh can be found [here](https://www.youtube.com/watch?v=i3cpkJ6iszk).
-
-## 5. Software/Package availability
-Use the following command to see what software packages are available for use:
-```{bash, eval = F}
-module avail
-```
-
-Some packages are available in [conda environments](https://secure.jcu.edu.au/confluence/pages/viewpage.action?pageId=60925720) rather than as environment modules. As example is [MultiQC](https://multiqc.info/), which is available in Anaconda3. 
-
-If you need other softwares, raise another Service Now request by emailing ITHelpDesk. 
-
-## 6. Transfering files to my HPC home directory
-
-```scp``` can be used to sending one file from your computer to your account on the log in node.
-
-[FileZilla](https://filezilla-project.org/) can be used to interactively send many files from your computer to your account on the log in node. 
-connect to HPC in FileZilla. Drag and drop files. 
-
-You can keep up to [5TB of data](https://secure.jcu.edu.au/confluence/display/Public/Selecting+a+storage+resource+that+best+fits+my+requirements) in your HPC home directory. *This is not a permenant data storage solution, only keep working data files on in your HPC home directory.* I'm still not sure how to permenantly store large datasets like sequencing data at JCU and will update this document when/if I find out! *Note: if you run out of space in your home directory, processed data will not be able to be sent back from the compute nodes when your jobs are processing. They will just stop halfway through and you will get an email saying there was a "post processing job error". So, don't store excess data here, and delete already processed files.*
-
-## 7. Submitting jobs
-
-The JCU HPC wuses a PBSPro Job Submission system. This requires you to write the job you require doing in a special bash script called a PBS script. The PBS script is then submitted to a queue using the command ```qsub```, and will be executed when there are enough compute resources available on the cluster to perform your job.
-
-## 8. PBS Scripts 
-
-You can see an example PBS script is below. 
-
-The first line ```#!/bin/bash``` is called the 'shebang' and is required as the first line in every bash script, not just PBS scritps. 
-
-The following lines that start with ```#PBS``` are information for the PBS job submission system (there are loads more options, these are some essential ones and the ones I use).
-
-+ -N defines the script name
-+ -l defines the compute resources the job needs
-+ -j defined the output made. oe means output and errors will be in the same output file
-+ -m defined when the user will be emailed (abort, begin, end)
-+ -M defines the email address to send the above information to
-
-In each PBS script, we then need to:
-+ load the modules (software) that are required to perform that job
-+ move to the correct directory to perfome the job, in the above case that is the directory that the PBS script was submitted from ```$PBS_O_WORKDIR```
-+ set any necessary environment variables (What are [environment variables?](https://www.youtube.com/watch?v=ADh_OFBfdEE))
-+ make any necessary files for job output
-+ execute the job. 
-
-```{bash, eval = F}
-#!/bin/bash
-#PBS -P ChmiInVivoRnaseq
-#PBS -N TestFastqc
-#PBS -l select=1:ncpus=1:mem=1gb     
-#PBS -l walltime=10:00              
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-module load fastqc/0.11.7
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-##### Set environment vars #####
-INPUTDIR="$PBS_O_WORKDIR/data"
-NCPU=1
-OUTDIR="$PBS_O_WORKDIR/outputs"
-
-##### Make output dirs #####
-mkdir -p $OUTDIR
-
-##### Execute Program #####
-fastqc -t $NCPU -o $OUTDIR $INPUTDIR/*.fastq.gz
-```
-
-Make your own PBS script in your favourite text editor, such as *nano* or *Notepad++*. (NB. If using text editors outside the the HPC's linux system you will need to convert the EOL for your scripts from your OS to linux before submitting to the HPC. In *Notepad++* this can be done under the edit tab, other text editors may require use of [*dos2unix*](http://dos2unix.sourceforge.net/))
-```{bash, eval = F}
-nano example.pbs
-```
-
-Once created and saved, submit the job in pbs script form to the queue using ```qsub```
-```{bash, eval = F}
-qsub fastq.pbs
-```
-
-View the job queue with qstat
-```{bash, eval = F}
-qstat
-```
-
-To view only your jobs use qstat with the -u flag and your HPC user name (your JC number)
-```{bash, eval = F}
-qstat -u jcXXXXXX
-```
-
-To delete a job, use qdel followed by the job number
-```{bash, eval = F}
-qdel jobnumber
-```
-
-Once your job is complete, you can view the output of your job using
-```{bash, eval = F}
-less TestFastqc.o1572010 
-```
-
-Once complete, you may want to send the output to your own laptop e.g. FastQC or MultiQC html files.
-
-If you're on a JCU computer, you'll need to make yourself an admin by clicking the small JCU flag in the top right bar and clicking "Make me an admin." You'll also need to be on the JCU network, so VPN in with Forticlient if you're not on campus wifi/internet.  
-
-On a mac, you can the address of your computer in System Preferences -> Sharing -> Remote login. It should be your jc number followed by @ and then an IP address.
-
-Then, use ```scp``` to transfer the files 
-```{bash, eval = F}
-scp D0_1505_R106_HHWK3DSXX_ATGAGGCC-GTTAATTG_L001_R1_fastqc.html jc351340@10.155.103.23:~/Desktop/
-```
-
-Enter your password when prompted.
-
-## 9. RNASeq mapping & alignments on the JCU HPC
+## RNASeq mapping & alignments on the JCU HPC
 
 Notes:
 
-+ Some programs use multiple threds or CPUs and where possible this has been utilised. For programs that do not have this functionality, [GNU parallel](https://www.gnu.org/software/parallel/) has been used to parallelise processing (O. Tange (2011): GNU Parallel - The Command-Line Power Tool ;login: The USENIX Magazine, February 2011:42-47). Make sure you include this in your references if you end up using this tool for your analysis.
++ Some programs use multiple threds or CPUs and where possible this has been utilised. For programs that do not have this functionality, [GNU parallel](https://www.gnu.org/software/parallel/) has been used to parallelise processing (O. Tange (2011): GNU Parallel - The Command-Line Power Tool ;login: The USENIX Magazine, February 2011:42-47).
 
-+ PBS script compute resrouces have been specified for ~35 paired end samples with a read depth of between 50-100 million reads. This translates to 70 raw fastq files. Compute resource parameters specified in each PBS script may need modification depending on how many files you need to process. 
++ PBS script compute resources have been specified for ~35 paired end samples with a read depth of between 50-100 million reads. This translates to 70 raw fastq files. Compute resource parameters specified in each PBS script may need modification depending on how many files you need to process. 
 
 + File paths and environment variables defined in PBS scripts will also need to be changed to match your directory tree. 
 
@@ -272,7 +124,6 @@ wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.
 
 Now we can index the genome using [STAR](https://github.com/alexdobin/STAR) by Alex Dobin (Ref: Alexander Dobin, Carrie A. Davis, Felix Schlesinger, Jorg Drenkow, Chris Zaleski, Sonali Jha, Philippe Batut, Mark Chaisson, and Thomas R. Gingeras (2013). STAR: ultrafast universal RNA-seq aligner. Bioinformatics; DOI: 10.1093/bioinformatics/bts635). Please read the [manual](https://physiology.med.cornell.edu/faculty/skrabanek/lab/angsd/lecture_notes/STARmanual.pdf) to make sure the parameters are set correctly for your use. You need to index the genome separately each time you are analysing RNA-seq data with a different read length, where the ```--sjdbOverhang``` should be set to the read length - 1 (*i.e.* 150 -1 = 149)
 
-+ Genome for mapping the tRNA and lncRNA (read length = 150)
 ```{bash, eval = F}
 #!/bin/bash
 #PBS -N index_hu_150
@@ -309,47 +160,10 @@ gzip GRCh38.primary_assembly.genome.fa
 
 ```
 
-+ Indexing a genome for mapping small RNA sequencing data (read length = 50)
-```{bash, eval = F}
-#!/bin/bash
-#PBS -N index_hu_50
-#PBS -l select=1:ncpus=16:mem=60gb   
-#PBS -l walltime=2:00:00
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-module load star star/2.7.0e
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-##### Unzip genome and annotations #####
-gunzip GRCh38.primary_assembly.genome.fa.gz
-
-##### Set environment vars #####
-THREADS=15
-OUTDIR="$PBS_O_WORKDIR/STAR_indexed_50"
-GENOME="$PBS_O_WORKDIR/GRCh38.primary_assembly.genome.fa"
-ANNOT="$PBS_O_WORKDIR/gencode.v34.primary_assembly.annotation.gtf"
-
-##### Make output dirs #####
-mkdir -p $OUTDIR
-
-##### Execute Program #####
-STAR --runThreadN $THREADS --runMode genomeGenerate --genomeDir $OUTDIR --genomeFastaFiles $GENOME --sjdbGTFfile $ANNOT --sjdbOverhang 49
-
-#### Re-zip the genome #####
-gzip GRCh38.primary_assembly.genome.fa
-
-```
-
 ### Step 4: Read Trimming
 
 The next step is quality and adaptor trimming of the sequencing. [Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) is a wrapper around Cutadapt and FastQC used for this, written by Felix Krueger. 
 
-+  Trimming tRNA reads for quality and adapters
 ```{bash, eval = F}
 #!/bin/bash
 #PBS -N tRNAtrimming
@@ -415,68 +229,6 @@ conda activate multiqc
 
 ##### Execute Program #####
 multiqc --force . trimmed_fastqc
-```
-
-+ Trimming for miRNA reads
-
-"for miRNA, a two-step process followed, whereby “–illumina” adapters were trimmed first, followed by “—small_rna” adapter trimming. Sequence end soft clipping was performed using a default phred score of 20 and paired reads less than 20bp for both reads were discarded. All other parameters were default." Ash
-
-```{bash, eval = F}
-#!/bin/bash
-#PBS -N smallRNAtrimming_illumina
-#PBS -l select=1:ncpus=24:mem=20gb   
-#PBS -l walltime=1:00:00
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-
-module load parallel
-module load anaconda3
-conda init bash
-. ~/.bashrc
-conda activate trimgalore
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-##### Set environment vars #####
-OUTDIR="$PBS_O_WORKDIR/trim_1_miRNA"
-
-##### Make output dirs #####
-mkdir -p $OUTDIR
-
-parallel -j23 --xapply trim_galore --illumina --paired -o $OUTDIR ::: *R1.fastq.gz ::: *R2.fastq.gz
-```
-
-```{bash, eval = F}
-#!/bin/bash
-#PBS -N smallRNAtrimming_smRNA
-#PBS -l select=1:ncpus=24:mem=20gb     
-#PBS -l walltime=1:00:00
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-
-module load parallel
-module load anaconda3
-conda init bash
-. ~/.bashrc
-conda activate trimgalore
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-##### Set environment vars #####
-OUTDIR="$PBS_O_WORKDIR/trim_2_miRNA"
-
-##### Make output dirs #####
-mkdir -p $OUTDIR
-
-parallel -j15 --xapply trim_galore --small_rna --paired -o $OUTDIR ::: *R1_val_1.fq.gz ::: *R2_val_2.fq.gz
 ```
 
 ### Step 4: Aligning trimmed reads to the genome
@@ -588,109 +340,6 @@ The STARtmp folder is supposed to be deleted, but isn't for me (let me know if i
 + Log.final.out file is generated and is not empty.
 + Last line of the Log.out file is "ALL DONE!"
 
-If interested in lnc or miRNAs only, it can be beneficial to use GTF annotation files that only contain lnc or miRNA annotations ([a subset of of complete GENCODE annotations](https://github.com/rm2011/ENCODE_miRNA-seq_STAR_parameters/blob/master/ENCODE_miRNA-seq_STAR_parameters.pdf)), respectively.
-
-+ Aligning only lncRNAs using a subset of the complete GTF file that only contains lncRNAs obtained from GENCODE (ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_34/gencode.v34.long_noncoding_RNAs.gtf.gz)
-
-```{bash, eval = F}
-#!/bin/bash
-#PBS -N alignlncRNA
-#PBS -l select=1:ncpus=16:mem=50gb   
-#PBS -l walltime=24:00:00
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-module load star/2.7.0e
-
-##### Set environment vars #####
-INDEXEDGENOMEDIR="/home/jc351340/CHMI_RNAseq/genome_and_annot/STAR_indexed_150/"
-ANNOT="/home/jc351340/CHMI_RNAseq/genome_and_annot/gencode.v34.long_noncoding_RNAs.gtf"
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-mkdir aligned_lncRNA
-
-##### Execute Program #####
-for i in *_R1_val_1.fq.gz 
-do 
-  STAR --runMode alignReads \
-        --runThreadN 15 \
-        --sjdbGTFfile $ANNOT \
-        --genomeDir $INDEXEDGENOMEDIR \
-        --readFilesIn $i ${i%_R1_val_1.fq.gz}_R2_val_2.fq.gz \
-        --readFilesCommand zcat \
-        --outFileNamePrefix ./aligned_lncRNA/${i%_R1_val_1.fq.gz} \
-        --outSAMtype BAM Unsorted SortedByCoordinate\
-        --outFilterMultimapNmax 20 \
-        --outFilterMismatchNmax 999 \
-        --outFilterMismatchNoverReadLmax 0.04 \
-        --outFilterType BySJout \
-        --alignIntronMin 20 \
-        --alignIntronMax 1000000 \
-        --alignMatesGapMax 1000000 \
-        --alignSJoverhangMin 8 \
-        --alignSJDBoverhangMin 1 \
-        --sjdbScore 1
-done
-
-```
-
-+ Aligning only miRNAs using a subset of the complete GTF file that only contrains miRNAs obtained by selecting lines in the complete GTF that include ```gene_type "miRNA"```.
-
-```{bash, eval = F}
-grep gene_type\ \"miRNA\" gencode.v34.primary_assembly.annotation.gtf > gencode.v34.miRNA.gtf
-```
- 
-Again, the STAR parameters used here are based on ENCODE [guidelines for miRNA](https://github.com/rm2011/ENCODE_miRNA-seq_STAR_parameters/blob/master/ENCODE_miRNA-seq_STAR_parameters.pdf)
-
-```{bash, eval = F}
-#!/bin/bash
-#PBS -N alignmiRNARNA
-#PBS -l select=1:ncpus=16:mem=50gb   
-#PBS -l walltime=24:00:00
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-module load star/2.7.0e
-
-
-##### Set environment vars #####
-INDEXEDGENOMEDIR="/home/jc351340/CHMI_RNAseq/genome_and_annot/STAR_indexed_50/"
-ANNOT="/home/jc351340/CHMI_RNAseq/genome_and_annot/gencode.v34.miRNA.gtf"
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-mkdir aligned_miRNA
-
-##### Execute Program #####
-for i in *_R1_val_1_val_1.fq.gz 
-do 
-  STAR --runMode alignReads \
-        --runThreadN 15 \
-        --sjdbGTFfile $ANNOT \
-        --genomeDir $INDEXEDGENOMEDIR \
-        --readFilesIn $i ${i%_R1_val_1_val_1.fq.gz}_R2_val_2_val_2.fq.gz \
-        --readFilesCommand zcat \
-        --outSAMtype BAM Unsorted SortedByCoordinate \
-        --outFileNamePrefix ./aligned_miRNA/${i%_R1_val_1_val_1.fq.gz} \
-        --outFilterMultimapNmax 10 \
-        --outFilterMismatchNmax 1 \
-        --alignIntronMax 1 \
-        --alignSJDBoverhangMin 1000 \
-        --outFilterMultimapScoreRange 0 \
-        --outFilterScoreMinOverLread 0 \
-        --outFilterMatchNminOverLread 0 \
-        --outFilterMatchNmin 16
-done
-
-```
- 
 ### Step 5: Alignment QC
 
 + Alignment QC
@@ -738,18 +387,6 @@ do
 done
 
 
-```
-
-Run interactively not as PBS:
-```{bash, eval = F}
-##### Load modules #####
-module load anaconda3
-conda init bash
-. ~/.bashrc
-conda activate multiqc
-
-##### Execute Program #####
-multiqc --force . trimmed_fastqc
 ```
 
 ### Step 5: Counting Features
@@ -810,56 +447,12 @@ ls *sortedByName.bam | parallel -j15 'python3 -m HTSeq.scripts.count --format=ba
 
 ```
 
-#### lncRNA
-```{bash, eval = F}
-#!/bin/bash
-#PBS -N htseq_count_lnc
-#PBS -l select=1:ncpus=16:mem=10gb   
-#PBS -l walltime=10:00:00
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-module load python3
-module load parallel
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-##### Execute Program #####
-ls *sortedByName.bam | parallel -j15 'python3 -m HTSeq.scripts.count --format=bam --stranded=reverse {} /home/jc351340/CHMI_RNAseq/genome_and_annot/gencode.v34.long_noncoding_RNAs.gtf > {.}.counts.txt'
-
-```
-
-#### miRNA
-```{bash, eval = F}
-#!/bin/bash
-#PBS -N htseq_count_mi
-#PBS -l select=1:ncpus=16:mem=10gb   
-#PBS -l walltime=10:00:00
-#PBS -j oe
-#PBS -m abe
-#PBS -M martha.cooper@jcu.edu.au
-
-##### Load modules #####
-module load python3
-module load parallel
-
-##### Change to current working directory #####
-cd $PBS_O_WORKDIR
-
-##### Execute Program #####
-ls *sortedByName.bam | parallel -j15 'python3 -m HTSeq.scripts.count --format=bam --stranded=reverse {} /home/jc351340/CHMI_RNAseq/genome_and_annot/gencode.v34.miRNA.gtf > {.}.counts.txt'
-
-```
 And there are you are; counts that can be used for downstream DGE. 
 
-
-Last QC
+Can use multiQC to collate all QC reports: 
 ```{bash, eval = F}
 ##### Load modules - multiQC #####
-##### multiQC will collate resport for trimming, aligning and counting #####
+##### multiQC will collate report for trimming, aligning and counting #####
 module load anaconda3
 conda init bash
 . ~/.bashrc
