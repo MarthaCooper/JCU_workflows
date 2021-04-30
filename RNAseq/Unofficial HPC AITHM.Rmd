@@ -347,7 +347,7 @@ gzip GRCh38.primary_assembly.genome.fa
 
 ### Step 4: Read Trimming
 
-The next step is quality and adaptor trimming of the sequencing. [Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) is a wrapper around Cutadapt and FastQC used for this, written by Felix Krueger. 
+The next step is quality and adaptor trimming of the sequencing. [Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/), a wrapper around Cutadapt and FastQC, was used for this (written by Felix Krueger) in combination with [GNU parallel](https://www.gnu.org/software/parallel/parallel_tutorial.html). A shell tool for executing jobs in parallel using one or more computers.
 
 +  Trimming tRNA reads for quality and adapters
 ```{bash, eval = F}
